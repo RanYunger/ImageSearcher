@@ -53,18 +53,28 @@ __global__ void searchPositions(int pictureDimension, int *devicePictureColorsMa
 	int objectDimension, int *deviceObjectColorsMatrix, float *deviceMatchingsArray,
 	int *devicePositionFlagsArray, float matchingEpsilon) 
 {
-	int threadsPerDimension = getPositionsPerDimension(pictureDimension, objectDimension) * objectDimension;
-	int isWithinPicture = (threadIdx.x < threadsPerDimension) && (threadIdx.y < threadsPerDimension);
-	int threadID, pictureOffset, objectOffset, matchingOffset;
+	// MODUS OPERANDI:
+	// 1. Given MxM picture P and NxN object O (N <= M), there is a submatrix of (M - N + 1)x(M - N + 1) possible positions to find O within P.
+	// 2. Each possible position requires NxN calculations for the search, thus (M - N + 1)xN threads are required per dimension.
+	// 3. Since the threads are allocated in blocks of 1024 threads (32 threads per block dimension), some threads might be allocated but never used.
+	// 4. If a thread is necessary for the search, it's ID in relation to the "required threads submatrix" can be calculated, and from it the
+	//	matching ID and offset within O. The offset within P is the matching ID calculated, and if the matching ID is on the edge of the possible positions
+	//	submatrix, the offset within O is added.   	
+
+	int positionsPerDimension = getPositionsPerDimension(pictureDimension, objectDimension);
+	int threadsPerDimension = positionsPerDimension * objectDimension;
+	int isNecessaryThread = (threadIdx.x < threadsPerDimension) && (threadIdx.y < threadsPerDimension);
+	int threadID, pictureOffset, objectOffset, matchingOffset, isOnEdge;
 	
 	// Checks threads position in relation to the required amount of threads
-	if (isWithinPicture)
+	if (isNecessaryThread)
 	{
 		// Initializes required variables
 		threadID = (threadIdx.y * threadsPerDimension) + threadIdx.x;
-		pictureOffset = threadID % (pictureDimension * pictureDimension);
 		objectOffset = threadID % (objectDimension * objectDimension);
 		matchingOffset = threadID / (objectDimension * objectDimension);
+		isOnEdge = (matchingOffset != 0) && (matchingOffset % (positionsPerDimension - 1) == 0);
+		pictureOffset = matchingOffset + (objectOffset * isOnEdge); 		
 	
 		// Calculates difference value and adds it to the right matching
 		atomicAdd(&(deviceMatchingsArray[matchingOffset]), difference(devicePictureColorsMatrix[pictureOffset], deviceObjectColorsMatrix[objectOffset]));
