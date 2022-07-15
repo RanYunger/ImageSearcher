@@ -43,6 +43,15 @@ __device__ __host__ int getPositionsPerDimension(int pictureDimension, int objec
 	return (pictureDimension - objectDimension) + 1;
 }
 
+__device__ int getPictureOffset(int matchingOffset, int objectOffset, int pictureDimension, int objectDimension)
+{
+	int positionsPerDimension = getPositionsPerDimension(pictureDimension, objectDimension);
+	int matchingRow = matchingOffset / positionsPerDimension, matchingColumn = matchingOffset % positionsPerDimension;
+	int objectRow = objectOffset / objectDimension, objectColumn = objectOffset % objectDimension;
+	
+	return ((matchingRow + objectRow) * pictureDimension) + (matchingColumn + objectColumn);
+}
+
 __device__ float difference(int p, int o) 
 {
 	return abs(((float)p - o) / p);
@@ -58,13 +67,13 @@ __global__ void searchPositions(int pictureDimension, int *devicePictureColorsMa
 	// 2. Each possible position requires NxN calculations for the search, thus (M - N + 1)xN threads are required per dimension.
 	// 3. Since the threads are allocated in blocks of 1024 threads (32 threads per block dimension), some threads might be allocated but never used.
 	// 4. If a thread is necessary for the search, it's ID in relation to the "required threads submatrix" can be calculated, and from it the
-	//	matching ID and offset within O. The offset within P is the matching ID calculated, and if the matching ID is on the edge of the possible positions
-	//	submatrix, the offset within O is added.   	
+	//    matching ID (offset in matchings array) and offset within O.
+	// 5. After extracting row and column from matching offset and object offset, picture offset is ((matchingRow + objectRow) * M) + (matchingColumn + objectColumn).
 
 	int positionsPerDimension = getPositionsPerDimension(pictureDimension, objectDimension);
 	int threadsPerDimension = positionsPerDimension * objectDimension;
 	int isNecessaryThread = (threadIdx.x < threadsPerDimension) && (threadIdx.y < threadsPerDimension);
-	int threadID, pictureOffset, objectOffset, matchingOffset, isOnEdge;
+	int threadID, pictureOffset, objectOffset, matchingOffset;
 	
 	// Checks threads position in relation to the required amount of threads
 	if (isNecessaryThread)
@@ -73,8 +82,7 @@ __global__ void searchPositions(int pictureDimension, int *devicePictureColorsMa
 		threadID = (threadIdx.y * threadsPerDimension) + threadIdx.x;
 		objectOffset = threadID % (objectDimension * objectDimension);
 		matchingOffset = threadID / (objectDimension * objectDimension);
-		isOnEdge = (matchingOffset != 0) && (matchingOffset % (positionsPerDimension - 1) == 0);
-		pictureOffset = matchingOffset + (objectOffset * isOnEdge); 		
+		pictureOffset = getPictureOffset(matchingOffset, objectOffset, pictureDimension, objectDimension);	
 	
 		// Calculates difference value and adds it to the right matching
 		atomicAdd(&(deviceMatchingsArray[matchingOffset]), difference(devicePictureColorsMatrix[pictureOffset], deviceObjectColorsMatrix[objectOffset]));
