@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
 	if (processID == 0)
 	{
 		// MPI variables
-		int picturesCount, sentPictureOffset;
+		int picturesCount, sentPictureOffset, resultsReceived = 0;
 		MPI_Status status;
 
 		// General variables
@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
 			// Receives a search record from any available process
 			MPI_Recv(&slaveSearchRecord, 4, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
 
-			searchRecordsArray[slaveSearchRecord.pictureID - 1] = slaveSearchRecord;
+			searchRecordsArray[resultsReceived++] = slaveSearchRecord;
 					
 			printf("Master recieved search record for picture %d from slave %d\n", slaveSearchRecord.pictureID, status.MPI_SOURCE);
 
@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
 			// Receives final search record from a slave
 			MPI_Recv(&slaveSearchRecord, 4, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
 
-			searchRecordsArray[slaveSearchRecord.pictureID - 1] = slaveSearchRecord;
+			searchRecordsArray[resultsReceived++] = slaveSearchRecord;
 
 			// Sends termination tag to the slave to kill it
 			MPI_Send(NULL, 0, MPI_INT, status.MPI_SOURCE, TERMINATE, MPI_COMM_WORLD);
