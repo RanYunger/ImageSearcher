@@ -8,12 +8,13 @@ A project of identifying objects in pictures in a parallel way, using MPI, OpenM
 
 - [Ran Yunger](https://github.com/RanYunger)
 
-## Modus Operandi
+## Background
 
 Given |P| pictures of size MxM and |O| objects of size NxN, object O is searched within picture P by the following similarity equation:
 
 ![image](https://user-images.githubusercontent.com/62587988/213808016-fa93effc-2483-4fda-806a-a40d4c471d85.png)
 
+## Modus Operandi
 
 - MPI: runs 2 <= x <= |P| processes, a master and at least one slave.
   -  The master loads the pictures and objects from file and manages workshares to its slaves.
