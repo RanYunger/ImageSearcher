@@ -10,7 +10,11 @@ A project of identifying objects in pictures in a parallel way, using MPI, OpenM
 
 ## Modus Operandi
 
-Given |P| pictures of size MxM and |O| objects of size NxN:
+Given |P| pictures of size MxM and |O| objects of size NxN, object O is searched within picture P by the following similarity equation:
+
+![image](https://user-images.githubusercontent.com/62587988/213808016-fa93effc-2483-4fda-806a-a40d4c471d85.png)
+
+
 - MPI: runs 2 <= x <= |P| processes, a master and at least one slave.
   -  The master loads the pictures and objects from file and manages workshares to its slaves.
   -  Each slave searches all objects in its designated picture.
@@ -21,5 +25,7 @@ Given |P| pictures of size MxM and |O| objects of size NxN:
 
   ![image](https://user-images.githubusercontent.com/62587988/213803898-98c0e5df-cd8e-4b8e-9ed3-2d4d34879730.png)
   
-- CUDA: Each OpenMP thread turns to the GPU and calculates the matching value on each position the object can be found in.
-
+- CUDA: Each OpenMP thread turns to the GPU and calculates the similarity value on each position the object can be found in
+  An NxN object can be found within an MxM picture within the top-left (M-N+1)x(M-N+1) submatrix.
+  
+  ![image](https://user-images.githubusercontent.com/62587988/213806795-5a6fe246-9b2e-4055-a9c4-d9b76503c391.png)
