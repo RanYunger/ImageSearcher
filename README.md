@@ -26,7 +26,8 @@ Given |P| pictures of size MxM and |O| objects of size NxN, object O is searched
 
   ![image](https://user-images.githubusercontent.com/62587988/213803898-98c0e5df-cd8e-4b8e-9ed3-2d4d34879730.png)
   
-- CUDA: Each OpenMP thread turns to the GPU and calculates the similarity value on each position the object can be found in
-  An NxN object can be found within an MxM picture within the top-left (M-N+1)x(M-N+1) submatrix.
+- CUDA: Each OpenMP thread turns to the GPU and calculates the similarity value on the designated thread object.
+  Since NxN object can be found within an MxM picture within (M-N+1)x(M-N+1) possible positions, the CUDA simultaniously calculates the similarity
+  value for each possible position within the (M-N+1)x(M-N+1) top left submatrix of the picture.
   
   ![image](https://user-images.githubusercontent.com/62587988/213806795-5a6fe246-9b2e-4055-a9c4-d9b76503c391.png)
