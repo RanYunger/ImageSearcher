@@ -1,6 +1,6 @@
 # ImageSearcher
 
-A project of identifying objects in pictures in a parallel way, using MPI, OpenMP and CUDA.
+A C-based project to identify objects in pictures in a parallel way, using MPI, OpenMP and CUDA.
 
 ![image](https://user-images.githubusercontent.com/62587988/213797162-0b301f39-6ed4-44b6-8fba-270c0038c45e.png)
 
